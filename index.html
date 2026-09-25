@@ -89,9 +89,22 @@
   .card{
     background:var(--card);border:1px solid var(--line);border-radius:20px;
     padding:14px;margin-top:12px;
+    overflow:hidden;            /* nothing escapes the widget */
+    min-width:0;
   }
   .card h2{margin:0 0 8px;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim)}
-  #chart{width:100%;height:120px;display:block}
+  #chartBox{width:100%;max-width:100%;overflow:hidden;min-width:0}
+  #chart{
+    display:block;
+    width:100%;max-width:100%;
+    height:132px;
+    margin:0;padding:0;border:0;
+  }
+  .legend{display:flex;gap:14px;align-items:center;font-size:10.5px;color:var(--dim);margin:2px 0 6px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .swatch{width:16px;height:3px;border-radius:99px;flex:none}
+  .swatch.real{background:var(--green);box-shadow:0 0 8px rgba(94,240,165,.6)}
+  .swatch.proj{background:repeating-linear-gradient(90deg,var(--gold) 0 5px,transparent 5px 9px)}
   .chartnote{font-size:10.5px;color:var(--dim);margin-top:6px;text-align:right;font-style:italic}
 
   /* ---------- lie card ---------- */
@@ -99,7 +112,19 @@
     background:linear-gradient(150deg,rgba(255,207,63,.16),rgba(255,158,196,.09));
     border:1px solid rgba(255,207,63,.3);
   }
-  #lieText{font-size:16px;line-height:1.42;font-weight:600;min-height:66px;display:flex;align-items:center}
+  /* NOTE: must NOT be display:flex — inline <b> tags get blockified into
+     separate flex items and the sentence shatters into columns. */
+  #lieText{
+    display:block;
+    font-size:15.5px;line-height:1.5;font-weight:600;
+    min-height:68px;
+    word-break:normal;overflow-wrap:anywhere;hyphens:none;
+    text-align:left;
+  }
+  #lieText b{
+    display:inline;font-weight:800;color:var(--gold);
+    white-space:nowrap;font-variant-numeric:tabular-nums;
+  }
   #lieText.swap{animation:swap .42s ease}
   @keyframes swap{0%{opacity:0;transform:translateY(9px) scale(.98)}100%{opacity:1;transform:none}}
   .liebtn{
@@ -269,7 +294,11 @@
   <!-- FAKE PORTFOLIO -->
   <div class="card">
     <h2>Definitely Real Portfolio</h2>
-    <canvas id="chart"></canvas>
+    <div class="legend">
+      <span><i class="swatch real"></i>actually saved</span>
+      <span><i class="swatch proj"></i>"projected"</span>
+    </div>
+    <div id="chartBox"><canvas id="chart"></canvas></div>
     <div class="chartnote">line only goes up. that's the whole strategy.</div>
   </div>
 
@@ -539,55 +568,123 @@ function renderPile(t){
    FAKE PORTFOLIO CHART (line only goes up)
    ========================================================= */
 function renderChart(){
-  var dpr=window.devicePixelRatio||1;
-  var w=elChart.clientWidth||300, h=120;
-  elChart.width=w*dpr; elChart.height=h*dpr;
-  var x=elChart.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
+  var box=document.getElementById('chartBox');
+  if(!box || !elChart) return;
+
+  // --- measure from the PARENT box, never from the canvas itself -----------
+  var w=Math.floor(box.clientWidth||0);
+  if(w<=0){ requestAnimationFrame(renderChart); return; }   // not laid out yet
+  var h=132;
+  var dpr=Math.min(3, window.devicePixelRatio||1);
+
+  // Pin BOTH the CSS size and the backing-store size so the canvas can never
+  // render larger than the card that contains it.
+  elChart.style.width=w+'px';
+  elChart.style.height=h+'px';
+  elChart.width=Math.round(w*dpr);
+  elChart.height=Math.round(h*dpr);
+
+  var x=elChart.getContext('2d');
+  if(!x) return;
+  x.setTransform(dpr,0,0,dpr,0,0);
   x.clearRect(0,0,w,h);
 
-  // build cumulative series (oldest -> newest)
+  // --- data ---------------------------------------------------------------
   var series=[0], run=0, src=items.slice().reverse();
   for(var i=0;i<src.length;i++){ run+=src[i].p; series.push(run); }
   if(series.length<2) series=[0,0];
-  // fake optimistic projection: +45% tacked on the end
   var peak=series[series.length-1];
-  var proj=[peak, peak*1.18+2, peak*1.45+6];
 
-  var all=series.concat(proj);
-  var max=Math.max.apply(null,all)||1;
-  var padX=6, padY=12, plotW=w-padX*2, plotH=h-padY*2;
-  var totalPts=all.length-1;
-  function px(i){ return padX+(plotW*(i/Math.max(1,totalPts))); }
-  function py(v){ return padY+plotH-(plotH*(v/max)); }
+  // the optimistic fiction: peak -> +18% -> +45%
+  var proj=[peak, peak*1.18+2, peak*1.45+6];
+  var max=Math.max(proj[2],1);
+
+  // --- geometry -----------------------------------------------------------
+  var padL=4, padR=4, padT=20, padB=8;
+  var plotW=Math.max(10, w-padL-padR);
+  var plotH=Math.max(10, h-padT-padB);
+
+  // Real line gets 70% of the width, the fantasy gets the last 30%.
+  // Fixed split keeps it readable whether you have 2 entries or 200.
+  var realW=plotW*0.70, projW=plotW*0.30;
+  var n=series.length-1;
+
+  function pxReal(i){ return padL + (n>0 ? realW*(i/n) : 0); }
+  function pxProj(k){ return padL + realW + projW*(k/2); }
+  function py(v){
+    var y=padT + plotH - (plotH*(v/max));
+    return Math.max(padT, Math.min(padT+plotH, y));   // hard clamp: no escaping
+  }
+
+  // --- clip everything to the plot area -----------------------------------
+  x.save();
+  x.beginPath();
+  x.rect(0,0,w,h);
+  x.clip();
 
   // grid
-  x.strokeStyle='rgba(255,255,255,.07)'; x.lineWidth=1;
-  for(var g=0;g<4;g++){ var gy=padY+plotH*(g/3); x.beginPath(); x.moveTo(0,gy); x.lineTo(w,gy); x.stroke(); }
+  x.strokeStyle='rgba(255,255,255,.06)'; x.lineWidth=1;
+  for(var g=0;g<=3;g++){
+    var gy=Math.round(padT+plotH*(g/3))+0.5;
+    x.beginPath(); x.moveTo(padL,gy); x.lineTo(w-padR,gy); x.stroke();
+  }
 
-  // area fill
-  var grad=x.createLinearGradient(0,padY,0,h);
-  grad.addColorStop(0,'rgba(94,240,165,.38)'); grad.addColorStop(1,'rgba(94,240,165,0)');
-  x.beginPath(); x.moveTo(px(0),py(series[0]));
-  for(var s=1;s<series.length;s++) x.lineTo(px(s),py(series[s]));
-  x.lineTo(px(series.length-1),h); x.lineTo(px(0),h); x.closePath();
+  // area fill under the real line
+  var grad=x.createLinearGradient(0,padT,0,padT+plotH);
+  grad.addColorStop(0,'rgba(94,240,165,.34)');
+  grad.addColorStop(1,'rgba(94,240,165,0)');
+  x.beginPath();
+  x.moveTo(pxReal(0),padT+plotH);
+  for(var s=0;s<series.length;s++) x.lineTo(pxReal(s),py(series[s]));
+  x.lineTo(pxReal(n),padT+plotH);
+  x.closePath();
   x.fillStyle=grad; x.fill();
 
   // real line
-  x.beginPath(); x.moveTo(px(0),py(series[0]));
-  for(var s2=1;s2<series.length;s2++) x.lineTo(px(s2),py(series[s2]));
-  x.strokeStyle='#5ef0a5'; x.lineWidth=2.5; x.lineJoin='round'; x.stroke();
+  x.beginPath();
+  x.moveTo(pxReal(0),py(series[0]));
+  for(var s2=1;s2<series.length;s2++) x.lineTo(pxReal(s2),py(series[s2]));
+  x.strokeStyle='#5ef0a5'; x.lineWidth=2.5;
+  x.lineJoin='round'; x.lineCap='round';
+  x.stroke();
 
-  // projection (dashed, gold)
-  var base=series.length-1;
-  x.beginPath(); x.moveTo(px(base),py(proj[0]));
-  x.lineTo(px(base+1),py(proj[1])); x.lineTo(px(base+2),py(proj[2]));
-  x.setLineDash([5,4]); x.strokeStyle='#ffcf3f'; x.lineWidth=2; x.stroke(); x.setLineDash([]);
+  // projection (dashed gold)
+  x.beginPath();
+  x.moveTo(pxProj(0),py(proj[0]));
+  x.lineTo(pxProj(1),py(proj[1]));
+  x.lineTo(pxProj(2),py(proj[2]));
+  x.setLineDash([5,4]);
+  x.strokeStyle='#ffcf3f'; x.lineWidth=2; x.lineCap='butt';
+  x.stroke();
+  x.setLineDash([]);
 
-  // end dot
-  x.beginPath(); x.arc(px(base+2),py(proj[2]),4,0,Math.PI*2);
+  // dots
+  x.beginPath(); x.arc(pxReal(n),py(peak),3.5,0,Math.PI*2);
+  x.fillStyle='#5ef0a5'; x.fill();
+  x.beginPath(); x.arc(pxProj(2)-3,py(proj[2]),3.5,0,Math.PI*2);
   x.fillStyle='#ffcf3f'; x.fill();
-  x.font='600 10px -apple-system,system-ui,sans-serif'; x.fillStyle='rgba(255,207,63,.9)';
-  x.textAlign='right'; x.fillText('projected*',w-6,py(proj[2])-8);
+
+  x.restore();
+
+  // --- top-corner value labels (outside the clip, inside the canvas) ------
+  x.font='700 11px -apple-system,BlinkMacSystemFont,system-ui,sans-serif';
+  x.textBaseline='top';
+  x.textAlign='left';
+  x.fillStyle='rgba(94,240,165,.95)';
+  x.fillText(shortMoney(peak), padL+1, 3);
+
+  x.textAlign='right';
+  x.fillStyle='rgba(255,207,63,.92)';
+  x.fillText(shortMoney(proj[2]), w-padR-1, 3);
+}
+
+/* Re-measure whenever the layout actually changes (rotation, keyboard,
+   install-to-homescreen resize). Cheaper and far more reliable than guessing. */
+if(window.ResizeObserver){
+  try{
+    new ResizeObserver(function(){ renderChart(); })
+      .observe(document.getElementById('chartBox'));
+  }catch(e){}
 }
 
 /* =========================================================

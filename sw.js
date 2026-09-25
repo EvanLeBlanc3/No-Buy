@@ -1,5 +1,5 @@
 /* Almost Bought It — offline service worker */
-const CACHE = 'almost-v1';
+const CACHE = 'almost-v2';
 
 const ASSETS = [
   './',
