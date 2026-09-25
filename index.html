@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Almost Bought It</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Almost">
+<meta name="theme-color" content="#06281f">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#06281f;
+    --bg2:#0b3b2c;
+    --card:rgba(255,255,255,.07);
+    --line:rgba(255,255,255,.14);
+    --green:#5ef0a5;
+    --green2:#14c97a;
+    --gold:#ffcf3f;
+    --gold2:#f0a500;
+    --text:#eafff4;
+    --dim:rgba(234,255,244,.62);
+    --pink:#ff9ec4;
+    --safe-t:env(safe-area-inset-top,0px);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;overscroll-behavior:none}
+  body{
+    background:
+      radial-gradient(130% 90% at 50% 0%, rgba(94,240,165,.18) 0%, transparent 55%),
+      linear-gradient(170deg,var(--bg2),var(--bg) 55%,#041a14);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    user-select:none;-webkit-user-select:none;
+  }
+  #app{
+    max-width:520px;margin:0 auto;
+    padding:calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 28px);
+    position:relative;z-index:2;
+  }
+
+  /* ---------- header ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand img{width:34px;height:34px;border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  .brand h1{font-size:17px;margin:0;letter-spacing:-.3px;white-space:nowrap}
+  .brand small{display:block;font-size:10.5px;color:var(--dim);font-weight:500;letter-spacing:.2px}
+  .iconbtn{
+    background:var(--card);border:1px solid var(--line);color:var(--text);
+    width:38px;height:38px;border-radius:12px;font-size:16px;line-height:1;
+    display:grid;place-items:center;cursor:pointer;flex:none;
+  }
+  .iconbtn:active{transform:scale(.92)}
+
+  /* ---------- hero counter ---------- */
+  .hero{
+    position:relative;overflow:hidden;
+    background:linear-gradient(160deg,rgba(94,240,165,.16),rgba(255,207,63,.08));
+    border:1px solid var(--line);border-radius:24px;
+    padding:18px 16px 14px;text-align:center;
+    box-shadow:0 18px 44px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .hero .label{font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--dim);font-weight:700}
+  #total{
+    font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin:4px 0 2px;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,var(--green) 55%,var(--green2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 42px rgba(94,240,165,.35);
+  }
+  #total.pop{animation:pop .45s cubic-bezier(.3,1.7,.5,1)}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.13)}100%{transform:scale(1)}}
+  .subline{font-size:12.5px;color:var(--dim);margin-bottom:10px}
+  .rankrow{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--dim);margin-bottom:5px}
+  .rankrow b{color:var(--gold);font-size:12px;letter-spacing:.2px}
+  .bar{height:9px;border-radius:99px;background:rgba(0,0,0,.3);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .bar i{display:block;height:100%;width:0;border-radius:99px;
+    background:linear-gradient(90deg,var(--green2),var(--green),var(--gold));
+    transition:width .9s cubic-bezier(.2,.9,.2,1);box-shadow:0 0 16px rgba(94,240,165,.6)}
+
+  /* ---------- chart ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:14px;margin-top:12px;
+  }
+  .card h2{margin:0 0 8px;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim)}
+  #chart{width:100%;height:120px;display:block}
+  .chartnote{font-size:10.5px;color:var(--dim);margin-top:6px;text-align:right;font-style:italic}
+
+  /* ---------- lie card ---------- */
+  .lie{
+    background:linear-gradient(150deg,rgba(255,207,63,.16),rgba(255,158,196,.09));
+    border:1px solid rgba(255,207,63,.3);
+  }
+  #lieText{font-size:16px;line-height:1.42;font-weight:600;min-height:66px;display:flex;align-items:center}
+  #lieText.swap{animation:swap .42s ease}
+  @keyframes swap{0%{opacity:0;transform:translateY(9px) scale(.98)}100%{opacity:1;transform:none}}
+  .liebtn{
+    margin-top:10px;width:100%;padding:11px;border-radius:14px;cursor:pointer;
+    background:linear-gradient(180deg,var(--gold),var(--gold2));border:0;
+    color:#3a2400;font-weight:800;font-size:14px;letter-spacing:.2px;
+  }
+  .liebtn:active{transform:scale(.97)}
+  .disclaimer{font-size:10px;color:var(--dim);margin-top:8px;text-align:center;line-height:1.4}
+
+  /* ---------- vault / coin pile ---------- */
+  #pileWrap{display:flex;align-items:flex-end;justify-content:center;gap:5px;height:104px;padding-bottom:4px;overflow:hidden}
+  .stack{display:flex;flex-direction:column-reverse;gap:2px;align-items:center}
+  .coin{
+    width:26px;height:8px;border-radius:50%;
+    background:linear-gradient(180deg,#ffe58a,var(--gold) 40%,var(--gold2));
+    box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.7);
+    animation:drop .45s cubic-bezier(.25,1.6,.5,1) backwards;
+  }
+  @keyframes drop{0%{transform:translateY(-70px) scaleY(.4);opacity:0}100%{transform:none;opacity:1}}
+  .pigrow{text-align:center;font-size:34px;margin-top:-6px}
+  #pigEmoji{display:inline-block}
+  #pigEmoji.wiggle{animation:wig .6s ease}
+  @keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-11deg) scale(1.14)}60%{transform:rotate(9deg) scale(1.1)}}
+
+  /* ---------- input ---------- */
+  .inputcard{position:sticky;top:calc(var(--safe-t) + 6px);z-index:6}
+  .row{display:flex;gap:8px}
+  input,select,textarea{
+    font-family:inherit;font-size:16px; /* 16px stops iOS zoom */
+    background:rgba(0,0,0,.28);border:1px solid var(--line);color:var(--text);
+    border-radius:14px;padding:13px 13px;width:100%;outline:none;-webkit-appearance:none;appearance:none;
+  }
+  input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(94,240,165,.16)}
+  input::placeholder{color:rgba(234,255,244,.4)}
+  select{background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  select option{background:#0b3b2c;color:var(--text)}
+  .price{flex:0 0 120px}
+  .addbtn{
+    margin-top:8px;width:100%;padding:15px;border:0;border-radius:16px;cursor:pointer;
+    background:linear-gradient(180deg,var(--green),var(--green2));color:#032417;
+    font-size:16px;font-weight:800;letter-spacing:.2px;
+    box-shadow:0 10px 26px rgba(20,201,122,.32);
+  }
+  .addbtn:active{transform:scale(.98)}
+
+  /* ---------- list ---------- */
+  .listhead{display:flex;justify-content:space-between;align-items:center;margin:18px 4px 8px}
+  .listhead h2{margin:0;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim)}
+  .clearall{background:none;border:1px solid rgba(255,120,120,.35);color:#ff9b9b;font-size:11px;
+    padding:6px 11px;border-radius:99px;cursor:pointer;font-weight:700}
+  .item{
+    display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:11px 12px;margin-bottom:8px;animation:slidein .35s ease backwards;
+  }
+  @keyframes slidein{0%{opacity:0;transform:translateY(-10px)}100%{opacity:1;transform:none}}
+  .item .emo{font-size:21px;flex:none;width:26px;text-align:center}
+  .item .meta{flex:1;min-width:0}
+  .item .nm{font-size:14.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .sub{font-size:11px;color:var(--dim);margin-top:2px}
+  .item .amt{font-size:15px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums}
+  .item .del{background:none;border:0;color:rgba(255,255,255,.34);font-size:18px;padding:2px 2px 2px 6px;cursor:pointer}
+  .empty{text-align:center;color:var(--dim);font-size:13.5px;padding:22px 10px;line-height:1.6}
+
+  footer{text-align:center;font-size:10.5px;color:rgba(234,255,244,.38);margin-top:22px;line-height:1.6}
+
+  /* ---------- fx layers ---------- */
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+  .fxcoin{position:absolute;font-size:26px;will-change:transform,opacity}
+  .floaty{
+    position:fixed;left:50%;top:32%;transform:translateX(-50%);z-index:60;pointer-events:none;
+    font-size:30px;font-weight:900;color:var(--green);text-shadow:0 4px 18px rgba(0,0,0,.5);
+    animation:floaty 1.15s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  @keyframes floaty{0%{opacity:0;transform:translate(-50%,16px) scale(.7)}
+    25%{opacity:1;transform:translate(-50%,-6px) scale(1.15)}
+    100%{opacity:0;transform:translate(-50%,-92px) scale(1)}}
+  #toast{
+    position:fixed;left:50%;bottom:calc(var(--safe-b) + 22px);transform:translateX(-50%) translateY(140%);
+    background:rgba(8,40,30,.95);border:1px solid var(--line);color:var(--text);
+    padding:11px 16px;border-radius:99px;font-size:13px;font-weight:600;z-index:70;
+    transition:transform .35s cubic-bezier(.2,1.4,.4,1);max-width:88vw;text-align:center;
+    backdrop-filter:blur(10px);
+  }
+  #toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ---------- rotation lock ---------- */
+  #rotlock{
+    position:fixed;inset:0;z-index:999;display:none;
+    background:linear-gradient(170deg,var(--bg2),#041a14);
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    text-align:center;padding:24px;
+  }
+  #rotlock .big{font-size:56px;animation:spinhint 2.4s ease-in-out infinite}
+  @keyframes spinhint{0%,60%,100%{transform:rotate(0)}30%{transform:rotate(-90deg)}}
+  #rotlock p{margin:0;font-size:15px;font-weight:700;max-width:340px;line-height:1.5}
+  #rotlock small{color:var(--dim);font-size:12px;max-width:320px;line-height:1.5}
+  #rotlock button{
+    background:var(--card);border:1px solid var(--line);color:var(--text);
+    padding:10px 16px;border-radius:99px;font-size:12.5px;font-weight:700;cursor:pointer;
+  }
+  body.landscape #rotlock{display:flex}
+  /* opt-in sideways mode: counter-rotate so the UI stays upright */
+  body.sideways #rotlock{display:none}
+  body.sideways #app{
+    position:fixed;top:50%;left:50%;
+    width:100vh;height:100vw;
+    transform:translate(-50%,-50%) rotate(-90deg);
+    transform-origin:center center;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+  }
+</style>
+</head>
+<body>
+
+<div id="fx"></div>
+
+<div id="rotlock">
+  <div class="big">🐷</div>
+  <p>Nope. This app does not rotate.</p>
+  <small>Your phone turned. Your savings did not. Turn it back upright and we'll pretend this never happened.</small>
+  <button id="sidewaysBtn">Fine, let me use it sideways anyway</button>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <img src="icon-192.png" alt="">
+      <div>
+        <h1>Almost Bought It</h1>
+        <small>a museum of purchases that never were</small>
+      </div>
+    </div>
+    <button class="iconbtn" id="soundBtn" title="Sound">🔊</button>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="label">Money "Saved"</div>
+    <div id="total">$0.00</div>
+    <div class="subline" id="countLine">0 purchases heroically avoided</div>
+    <div class="rankrow"><b id="rankName">Broke But Disciplined</b><span id="rankNext"></span></div>
+    <div class="bar"><i id="rankBar"></i></div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="card inputcard">
+    <input id="name" type="text" placeholder="What did you almost buy?" maxlength="60" autocomplete="off" enterkeyhint="done">
+    <div class="row" style="margin-top:8px">
+      <input id="price" class="price" type="text" inputmode="decimal" placeholder="$0.00" autocomplete="off" enterkeyhint="done">
+      <select id="cat">
+        <option value="">Category (optional)</option>
+        <option>Impulse</option>
+        <option>Snack</option>
+        <option>Gadget</option>
+        <option>Clothes</option>
+        <option>Subscription</option>
+        <option>Cart Abandoned</option>
+        <option>3AM Decision</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="addbtn" id="addBtn">I Did Not Buy It 💪</button>
+  </div>
+
+  <!-- FAKE PORTFOLIO -->
+  <div class="card">
+    <h2>Definitely Real Portfolio</h2>
+    <canvas id="chart"></canvas>
+    <div class="chartnote">line only goes up. that's the whole strategy.</div>
+  </div>
+
+  <!-- LIE CARD -->
+  <div class="card lie">
+    <h2>Beautiful Lies</h2>
+    <div id="lieText">Log something you almost bought and I'll start flattering you about it.</div>
+    <button class="liebtn" id="lieBtn">Lie to me again ✨</button>
+    <div class="disclaimer">Only the big green number is real. Everything else here is enthusiastic fiction and not financial advice.</div>
+  </div>
+
+  <!-- VAULT -->
+  <div class="card">
+    <h2>The Vault</h2>
+    <div id="pileWrap"></div>
+    <div class="pigrow"><span id="pigEmoji">🐷</span></div>
+  </div>
+
+  <!-- LIST -->
+  <div class="listhead">
+    <h2>The Near-Misses</h2>
+    <button class="clearall" id="clearBtn">Delete All</button>
+  </div>
+  <div id="list"></div>
+
+  <footer>
+    Works offline. Stores everything on this phone only.<br>
+    No accounts, no cloud, no judgment. Okay, a little judgment.
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   ALMOST BOUGHT IT — offline PWA
+   ========================================================= */
+(function(){
+"use strict";
+
+/* ---------- storage ---------- */
+var KEY='almost.items.v1', SKEY='almost.sound.v1';
+var items=[];
+try{ items=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ items=[]; }
+if(!Array.isArray(items)) items=[];
+var soundOn = localStorage.getItem(SKEY)!=='0';
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(items)); }catch(e){} }
+
+/* ---------- elements ---------- */
+var $=function(id){return document.getElementById(id);};
+var elTotal=$('total'), elCount=$('countLine'), elRank=$('rankName'), elNext=$('rankNext'),
+    elBar=$('rankBar'), elList=$('list'), elPile=$('pileWrap'), elLie=$('lieText'),
+    elName=$('name'), elPrice=$('price'), elCat=$('cat'), elToast=$('toast'),
+    elFx=$('fx'), elChart=$('chart'), elPig=$('pigEmoji'), elSound=$('soundBtn');
+
+/* =========================================================
+   SOUND ENGINE (synthesized, zero files, works offline)
+   ========================================================= */
+var AC=null;
+function ac(){
+  if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC=new C(); }
+  if(AC.state==='suspended') AC.resume();
+  return AC;
+}
+function tone(freq,start,dur,type,vol,slideTo){
+  var c=ac(); if(!c) return;
+  var o=c.createOscillator(), g=c.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(freq,c.currentTime+start);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,c.currentTime+start+dur);
+  g.gain.setValueAtTime(0.0001,c.currentTime+start);
+  g.gain.exponentialRampToValueAtTime(vol||0.25,c.currentTime+start+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+start+dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(c.currentTime+start); o.stop(c.currentTime+start+dur+0.03);
+}
+function noise(start,dur,vol,f0,f1){
+  var c=ac(); if(!c) return;
+  var len=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,len,c.sampleRate), d=buf.getChannelData(0);
+  for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+  var s=c.createBufferSource(); s.buffer=buf;
+  var bp=c.createBiquadFilter(); bp.type='bandpass';
+  bp.frequency.setValueAtTime(f0||1200,c.currentTime+start);
+  bp.frequency.exponentialRampToValueAtTime(f1||400,c.currentTime+start+dur);
+  var g=c.createGain(); g.gain.setValueAtTime(vol||0.12,c.currentTime+start);
+  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+start+dur);
+  s.connect(bp); bp.connect(g); g.connect(c.destination);
+  s.start(c.currentTime+start);
+}
+var SFX={
+  kaching:function(){ // cash register: ding-ding + drawer
+    noise(0,.09,.12,2600,900);
+    tone(1046.5,.02,.30,'triangle',.28);
+    tone(1318.5,.02,.32,'triangle',.22);
+    tone(1567.9,.13,.42,'triangle',.26);
+    tone(2093.0,.13,.40,'sine',.14);
+  },
+  coin:function(){ tone(900,0,.10,'square',.10,1800); },
+  whoosh:function(){ noise(0,.32,.10,3000,300); },
+  pop:function(){ tone(420,0,.09,'sine',.16,180); },
+  milestone:function(){ [523.3,659.3,784,1046.5,1318.5].forEach(function(f,i){ tone(f,i*.085,.34,'triangle',.22); }); },
+  nope:function(){ tone(220,0,.16,'sawtooth',.13,120); }
+};
+function play(n){ if(!soundOn) return; try{ SFX[n](); }catch(e){} }
+function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+elSound.textContent = soundOn?'🔊':'🔇';
+elSound.addEventListener('click',function(){
+  soundOn=!soundOn; localStorage.setItem(SKEY,soundOn?'1':'0');
+  elSound.textContent=soundOn?'🔊':'🔇';
+  if(soundOn) play('coin');
+  toast(soundOn?'Sound on. Ka-ching incoming.':'Muted. Saving money silently, like a ninja.');
+});
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function money(n){
+  return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function shortMoney(n){
+  if(!isFinite(n)) return '$∞ (the spreadsheet gave up)';
+  if(n>=1e18) return '$'+n.toExponential(2).replace('e+','e')+' (a number with a scary number of digits)';
+  if(n>=1e15) return '$'+(n/1e15).toFixed(1)+' quadrillion';
+  if(n>=1e12) return '$'+(n/1e12).toFixed(1)+'T';
+  if(n>=1e9)  return '$'+(n/1e9).toFixed(1)+'B';
+  if(n>=1e6)  return '$'+(n/1e6).toFixed(1)+'M';
+  if(n>=1e4)  return '$'+Math.round(n).toLocaleString('en-US');
+  return money(n);
+}
+function total(){ return items.reduce(function(s,i){return s+i.p;},0); }
+function toast(msg){
+  elToast.textContent=msg; elToast.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(function(){elToast.classList.remove('show');},2400);
+}
+var CAT_EMOJI={'Impulse':'⚡','Snack':'🍫','Gadget':'🎧','Clothes':'👕','Subscription':'📺',
+  'Cart Abandoned':'🛒','3AM Decision':'🌙','Other':'📦','':'💸'};
+
+/* =========================================================
+   RANKS
+   ========================================================= */
+var RANKS=[
+  [0,'Broke But Disciplined'],[25,'Window Shopper'],[100,'Cart Abandoner'],
+  [250,'Tab Closer'],[500,'Impulse Ninja'],[1000,'Budget Gremlin'],
+  [2500,'Checkout Coward (Respectfully)'],[5000,'Certified Not-Buyer'],
+  [10000,'Imaginary Millionaire'],[25000,'Fiscal Hallucination'],
+  [50000,'Wealth Is A Mindset (Allegedly)'],[100000,'Legend Of The Unspent']
+];
+function rankFor(t){
+  var cur=RANKS[0], nxt=null;
+  for(var i=0;i<RANKS.length;i++){
+    if(t>=RANKS[i][0]) cur=RANKS[i];
+    else { nxt=RANKS[i]; break; }
+  }
+  return {cur:cur,next:nxt};
+}
+
+/* =========================================================
+   BEAUTIFUL LIES
+   ========================================================= */
+function lies(t){
+  if(t<=0) return ['Log something you almost bought and I\'ll start flattering you about it.'];
+  var fv30=t*Math.pow(1.07,30);
+  var fv10=t*Math.pow(1.07,10);
+  var L=[];
+  L.push('Invested at 7% for 30 years, that\'s <b>'+shortMoney(fv30)+'</b>. Assuming you invest it. Which you won\'t. But still.');
+  L.push('In 10 years at 7%: <b>'+shortMoney(fv10)+'</b>. Future you is already writing a thank-you note.');
+  L.push('That\'s <b>'+Math.floor(t/4.75).toLocaleString()+'</b> airport waters you will now never need to buy at gunpoint prices.');
+  L.push('Equal to <b>'+Math.floor(t/15.99).toLocaleString()+'</b> months of that streaming service you forgot you subscribed to.');
+  L.push('That\'s <b>'+Math.floor(t/14).toLocaleString()+'</b> avocado toasts, i.e. <b>'+(t/14/3).toFixed(1)+'</b> houses by 1987 math.');
+  L.push('You are <b>'+Math.min(100,(t/8500*100)).toFixed(1)+'%</b> of the way to a used Honda Civic with character.');
+  L.push('In pennies: <b>'+Math.round(t*100).toLocaleString()+'</b>. That\'s roughly <b>'+(t*100*2.5/453.6).toFixed(1)+' lbs</b> of copper-ish disappointment.');
+  L.push('Compounded daily at your ego\'s interest rate (14,000% APY) for one year: <b>'+shortMoney(t*Math.pow(1+140/365,365))+'</b>. Numbers this big are legally a vibe.');
+  L.push('That\'s <b>'+(t/7000000*30).toFixed(4)+' seconds</b> of a Super Bowl ad. Your restraint is nationally televised.');
+  L.push('Converted to 1985 dollars and back twice for no reason: <b>'+shortMoney(t*1.0001)+'</b>. Rigorous stuff.');
+  L.push('Stacked as $1 bills, your savings would be <b>'+(t*0.0043).toFixed(2)+' inches</b> tall. Taller than your last impulse purchase\'s usefulness.');
+  L.push('At this pace you\'ll retire <b>'+Math.max(1,Math.round(t/250))+' days</b> early, on a beach that is mostly conceptual.');
+  L.push('That\'s <b>'+Math.floor(t/1.2).toLocaleString()+'</b> gumballs. An unmanageable number of gumballs. Excellent work not having them.');
+  L.push('If money grew like bamboo, you\'d now own <b>'+shortMoney(t*3)+'</b> and a mild pest problem.');
+  return L;
+}
+var lastLie=-1;
+function newLie(silent){
+  var L=lies(total());
+  var i=Math.floor(Math.random()*L.length);
+  if(L.length>1 && i===lastLie) i=(i+1)%L.length;
+  lastLie=i;
+  elLie.innerHTML=L[i];
+  elLie.classList.remove('swap'); void elLie.offsetWidth; elLie.classList.add('swap');
+  if(!silent) play('whoosh');
+}
+$('lieBtn').addEventListener('click',function(){ newLie(); buzz(8); });
+
+/* =========================================================
+   ODOMETER COUNTER
+   ========================================================= */
+var shown=0, rafId=null;
+function animateTo(target,ms){
+  var from=shown, start=performance.now(), dur=ms||900;
+  cancelAnimationFrame(rafId);
+  (function step(now){
+    var p=Math.min(1,(now-start)/dur);
+    var e=1-Math.pow(1-p,3);
+    shown=from+(target-from)*e;
+    elTotal.textContent=money(shown);
+    if(p<1) rafId=requestAnimationFrame(step); else shown=target;
+  })(start);
+}
+
+/* =========================================================
+   COIN RAIN + FLOATY
+   ========================================================= */
+function coinRain(count){
+  var n=Math.max(8,Math.min(38,count||14));
+  for(var i=0;i<n;i++){
+    (function(i){
+      setTimeout(function(){
+        var c=document.createElement('div');
+        c.className='fxcoin';
+        c.textContent=Math.random()<.22?'💵':(Math.random()<.5?'🪙':'💰');
+        var x=Math.random()*100, dur=1100+Math.random()*900, rot=(Math.random()*720-360);
+        c.style.left=x+'vw'; c.style.top='-50px';
+        elFx.appendChild(c);
+        var a=c.animate(
+          [{transform:'translateY(0) rotate(0deg)',opacity:1},
+           {transform:'translateY(115vh) rotate('+rot+'deg)',opacity:.15}],
+          {duration:dur,easing:'cubic-bezier(.35,.05,.6,1)'}
+        );
+        if(i%4===0) setTimeout(function(){ play('coin'); },dur*0.55);
+        a.onfinish=function(){ c.remove(); };
+        setTimeout(function(){ if(c.parentNode) c.remove(); },dur+200);
+      },i*45);
+    })(i);
+  }
+}
+function floaty(txt){
+  var f=document.createElement('div'); f.className='floaty'; f.textContent=txt;
+  document.body.appendChild(f);
+  setTimeout(function(){ f.remove(); },1200);
+}
+
+/* =========================================================
+   VAULT PILE
+   ========================================================= */
+function renderPile(t){
+  elPile.innerHTML='';
+  var coins=Math.min(90,Math.max(0,Math.round(Math.pow(t,0.55)/2)));
+  if(coins===0){
+    elPile.innerHTML='<div class="empty" style="padding:26px 0">The vault echoes. Go not-buy something.</div>';
+    elPig.textContent='🐷'; return;
+  }
+  var stacks=Math.min(9,Math.ceil(coins/10));
+  var per=Math.ceil(coins/stacks), made=0;
+  for(var s=0;s<stacks;s++){
+    var st=document.createElement('div'); st.className='stack';
+    var h=Math.min(per,coins-made);
+    for(var c=0;c<h;c++){
+      var d=document.createElement('div'); d.className='coin';
+      d.style.animationDelay=(s*40+c*22)+'ms';
+      st.appendChild(d);
+    }
+    made+=h; elPile.appendChild(st);
+    if(made>=coins) break;
+  }
+  elPig.textContent = t>=25000?'🐖👑' : t>=5000?'🐖' : t>=1000?'🐷💎' : '🐷';
+}
+
+/* =========================================================
+   FAKE PORTFOLIO CHART (line only goes up)
+   ========================================================= */
+function renderChart(){
+  var dpr=window.devicePixelRatio||1;
+  var w=elChart.clientWidth||300, h=120;
+  elChart.width=w*dpr; elChart.height=h*dpr;
+  var x=elChart.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,w,h);
+
+  // build cumulative series (oldest -> newest)
+  var series=[0], run=0, src=items.slice().reverse();
+  for(var i=0;i<src.length;i++){ run+=src[i].p; series.push(run); }
+  if(series.length<2) series=[0,0];
+  // fake optimistic projection: +45% tacked on the end
+  var peak=series[series.length-1];
+  var proj=[peak, peak*1.18+2, peak*1.45+6];
+
+  var all=series.concat(proj);
+  var max=Math.max.apply(null,all)||1;
+  var padX=6, padY=12, plotW=w-padX*2, plotH=h-padY*2;
+  var totalPts=all.length-1;
+  function px(i){ return padX+(plotW*(i/Math.max(1,totalPts))); }
+  function py(v){ return padY+plotH-(plotH*(v/max)); }
+
+  // grid
+  x.strokeStyle='rgba(255,255,255,.07)'; x.lineWidth=1;
+  for(var g=0;g<4;g++){ var gy=padY+plotH*(g/3); x.beginPath(); x.moveTo(0,gy); x.lineTo(w,gy); x.stroke(); }
+
+  // area fill
+  var grad=x.createLinearGradient(0,padY,0,h);
+  grad.addColorStop(0,'rgba(94,240,165,.38)'); grad.addColorStop(1,'rgba(94,240,165,0)');
+  x.beginPath(); x.moveTo(px(0),py(series[0]));
+  for(var s=1;s<series.length;s++) x.lineTo(px(s),py(series[s]));
+  x.lineTo(px(series.length-1),h); x.lineTo(px(0),h); x.closePath();
+  x.fillStyle=grad; x.fill();
+
+  // real line
+  x.beginPath(); x.moveTo(px(0),py(series[0]));
+  for(var s2=1;s2<series.length;s2++) x.lineTo(px(s2),py(series[s2]));
+  x.strokeStyle='#5ef0a5'; x.lineWidth=2.5; x.lineJoin='round'; x.stroke();
+
+  // projection (dashed, gold)
+  var base=series.length-1;
+  x.beginPath(); x.moveTo(px(base),py(proj[0]));
+  x.lineTo(px(base+1),py(proj[1])); x.lineTo(px(base+2),py(proj[2]));
+  x.setLineDash([5,4]); x.strokeStyle='#ffcf3f'; x.lineWidth=2; x.stroke(); x.setLineDash([]);
+
+  // end dot
+  x.beginPath(); x.arc(px(base+2),py(proj[2]),4,0,Math.PI*2);
+  x.fillStyle='#ffcf3f'; x.fill();
+  x.font='600 10px -apple-system,system-ui,sans-serif'; x.fillStyle='rgba(255,207,63,.9)';
+  x.textAlign='right'; x.fillText('projected*',w-6,py(proj[2])-8);
+}
+
+/* =========================================================
+   LIST
+   ========================================================= */
+function renderList(){
+  if(!items.length){
+    elList.innerHTML='<div class="empty">Nothing here yet.<br>Go stare longingly at something expensive, then don\'t buy it.</div>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    var d=new Date(it.t);
+    var when=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+
+             d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    html+='<div class="item" style="animation-delay:'+Math.min(i*28,280)+'ms">'
+        +   '<div class="emo">'+(CAT_EMOJI[it.c]||'💸')+'</div>'
+        +   '<div class="meta"><div class="nm">'+esc(it.n)+'</div>'
+        +   '<div class="sub">'+(it.c?esc(it.c)+' · ':'')+when+'</div></div>'
+        +   '<div class="amt">'+money(it.p)+'</div>'
+        +   '<button class="del" data-id="'+it.id+'" aria-label="delete">✕</button>'
+        + '</div>';
+  }
+  elList.innerHTML=html;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+elList.addEventListener('click',function(e){
+  var b=e.target.closest('.del'); if(!b) return;
+  var id=b.getAttribute('data-id');
+  items=items.filter(function(i){ return String(i.id)!==String(id); });
+  save(); play('pop'); buzz(6);
+  render(true);
+  toast('Removed. The money un-saves itself. Tragic.');
+});
+
+/* =========================================================
+   RENDER ALL
+   ========================================================= */
+var lastRankIdx=-1;
+function render(animate){
+  var t=total();
+  animateTo(t, animate?900:520);
+  elCount.textContent = items.length+' purchase'+(items.length===1?'':'s')+' heroically avoided';
+  var r=rankFor(t);
+  elRank.textContent=r.cur[1];
+  if(r.next){
+    elNext.textContent=money(Math.max(0,r.next[0]-t))+' to "'+r.next[1]+'"';
+    var span=r.next[0]-r.cur[0];
+    elBar.style.width=Math.max(3,Math.min(100,((t-r.cur[0])/span)*100))+'%';
+  } else {
+    elNext.textContent='max rank. touch grass.';
+    elBar.style.width='100%';
+  }
+  renderPile(t); renderList(); renderChart();
+  var idx=RANKS.indexOf(r.cur);
+  if(lastRankIdx>=0 && idx>lastRankIdx){
+    play('milestone'); buzz([10,40,10,40,20]);
+    toast('🏆 New rank: '+r.cur[1]);
+    coinRain(30);
+  }
+  lastRankIdx=idx;
+}
+
+/* =========================================================
+   ADD
+   ========================================================= */
+function parsePrice(v){
+  var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));
+  return isFinite(n)?n:NaN;
+}
+function add(){
+  var n=elName.value.trim();
+  var p=parsePrice(elPrice.value);
+  if(!n && !isFinite(p)){ play('nope'); toast('I need at least a price. Ideally a regret too.'); return; }
+  if(!isFinite(p) || p<=0){ play('nope'); elPrice.focus(); toast('Put a real price in. "Priceless" is not a number.'); return; }
+  if(!n) n='Mystery temptation';
+  if(p>1e9) p=1e9;
+
+  items.unshift({ id:Date.now()+''+Math.floor(Math.random()*999), n:n, p:p, c:elCat.value, t:Date.now() });
+  save();
+  elName.value=''; elPrice.value='';
+  elName.blur(); elPrice.blur();
+
+  play('kaching'); buzz([12,30,12]);
+  floaty('+'+money(p));
+  coinRain(Math.max(10,Math.min(34,Math.round(p/12)+10)));
+  elPig.classList.remove('wiggle'); void elPig.offsetWidth; elPig.classList.add('wiggle');
+  render(true);
+  setTimeout(function(){ newLie(true); },420);
+}
+$('addBtn').addEventListener('click',add);
+[elName,elPrice].forEach(function(el){
+  el.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); add(); } });
+});
+
+/* clear all */
+$('clearBtn').addEventListener('click',function(){
+  if(!items.length){ play('nope'); toast('Already empty. Impressively empty.'); return; }
+  if(confirm('Delete all '+items.length+' near-misses and reset your imaginary fortune to $0.00?')){
+    items=[]; save(); shown=0; lastRankIdx=-1;
+    play('whoosh'); buzz(20);
+    elTotal.textContent='$0.00';
+    render(false); newLie(true);
+    toast('Wiped. Your fortune was fictional anyway.');
+  }
+});
+
+/* =========================================================
+   ROTATION LOCK
+   ========================================================= */
+function checkOrientation(){
+  var landscape = (window.innerWidth > window.innerHeight);
+  document.body.classList.toggle('landscape', landscape);
+  if(!landscape) document.body.classList.remove('sideways');
+  renderChart();
+}
+$('sidewaysBtn').addEventListener('click',function(){
+  document.body.classList.add('sideways'); play('pop');
+  setTimeout(renderChart,60);
+});
+window.addEventListener('resize',checkOrientation);
+window.addEventListener('orientationchange',function(){ setTimeout(checkOrientation,180); });
+if(screen.orientation && screen.orientation.lock){
+  try{ screen.orientation.lock('portrait').catch(function(){}); }catch(e){}
+}
+checkOrientation();
+
+/* prevent pinch-zoom / double-tap zoom */
+document.addEventListener('gesturestart',function(e){ e.preventDefault(); });
+var lastTouch=0;
+document.addEventListener('touchend',function(e){
+  var now=Date.now();
+  if(now-lastTouch<=320){ e.preventDefault(); }
+  lastTouch=now;
+},{passive:false});
+
+/* unlock audio on first interaction (iOS) */
+['touchend','click'].forEach(function(ev){
+  document.addEventListener(ev,function once(){ ac(); document.removeEventListener(ev,once); },{once:true});
+});
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+render(false);
+newLie(true);
+window.addEventListener('load',function(){ setTimeout(renderChart,120); });
+
+/* service worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+})();
+</script>
+</body>
+</html>
